@@ -6,10 +6,10 @@ defmodule HTMLHandler.Templater do
   
     require Logger
 
-    def replace(html) do
+    def replace(html, dir_prefix \\ "") do
         to_replace = Regex.scan(~r/<\s*template\s*src\s*=\s*"\s*([a-zA-Z\._\-\/]+)\s*"\s*\/\s*>/, html)
         Enum.reduce(to_replace, html, fn [str, file], acc ->
-            case File.read(file) do
+            case File.read(dir_prefix <> "/" <> file) do
                 {:ok, content} -> String.replace(acc, str, content)
                 {:error, reason} ->
                     Logger.error("Can't read #{file} wile compiling html file. Reason : #{inspect reason}")
