@@ -31,7 +31,7 @@ defmodule Mix.Tasks.CompileFront do
             File.read!("#{html_directory}/#{origin}") |> HTMLHandler.Templater.replace(html_directory)
         else File.read!("#{html_directory}/#{origin}") end
         File.write!("#{output}/html/temp.#{origin}", tempo)
-        :os.cmd('minify #{output}/html/temp.#{origin} > #{output}/html/#{origin}')
+        :os.cmd('html-minifier --collapse-whitespace --remove-comments --remove-redundant-attributes #{output}/html/temp.#{origin} > #{output}/html/#{origin}')
         File.rm("#{output}/html/temp.#{origin}")
     end)
 
@@ -60,4 +60,14 @@ defmodule Mix.Tasks.CompileFront do
     end
 
   end
+end
+
+defmodule Mix.Tasks.InstallMinifiers do
+
+    use Mix.Task
+    def run(_) do
+        :os.cmd('npm install -g uglifyjs')
+        :os.cmd('npm install -g minify')
+        :os.cmd('npm install -g html-minifier')
+    end
 end
