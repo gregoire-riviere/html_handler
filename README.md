@@ -10,7 +10,7 @@ by adding `html_handler` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:html_handler, "~> 0.1.0"}
+    {:html_handler, "~> 1.0"}
   ]
 end
 ```
