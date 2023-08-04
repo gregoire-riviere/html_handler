@@ -1,7 +1,5 @@
 # HtmlHandler
 
-**TODO: Add description**
-
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
@@ -19,4 +17,6 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at <https://hexdocs.pm/html_handler>.
 
-**TOADD : npm install uglify-js -g and npm i minify -g** 
+## Goal
+
+The goal of this deps is to provide a very simple way to pre-compile raw html/CSS/JS on server side
