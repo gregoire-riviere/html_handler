@@ -10,7 +10,7 @@ defmodule Mix.Tasks.CompileFront do
     dir_to_copy = Application.get_env(:html_handler, :directories)[:dir_to_copy]
     output = Application.get_env(:html_handler, :directories)[:output]
     templatization? = Application.get_env(:html_handler, :templatization?, false)
-    
+
     previous_output = output |>
     String.replace_suffix("/", "")
     previous_output = previous_output <> ".previous/"
@@ -35,21 +35,25 @@ defmodule Mix.Tasks.CompileFront do
         File.rm("#{output}/html/temp.#{origin}")
     end)
 
-    IO.puts(" --- JS ---")
-    File.ls!(css_directory) |>
-    Enum.filter(& String.ends_with?(&1, ".css")) |>
-    Enum.each(fn origin ->
-        IO.puts("#{css_directory}/#{origin}")
-        :os.cmd('minify #{css_directory}/#{origin} > #{output}/css/#{origin}')
-    end)
+    if File.exists?(css_directory) do
+        IO.puts(" --- CSS ---")
+        File.ls!(css_directory) |>
+        Enum.filter(& String.ends_with?(&1, ".css")) |>
+        Enum.each(fn origin ->
+            IO.puts("#{css_directory}/#{origin}")
+            :os.cmd('minify #{css_directory}/#{origin} > #{output}/css/#{origin}')
+        end)
+    end
 
-    IO.puts(" --- CSS ---")
-    File.ls!(js_directory) |>
-    Enum.filter(& String.ends_with?(&1, ".js")) |>
-    Enum.each(fn origin ->
-        IO.puts("#{js_directory}/#{origin}")
-        :os.cmd('uglifyjs #{js_directory}/#{origin} > #{output}/js/#{origin}')
-    end)
+    if File.exists?(js_directory) do
+        IO.puts(" --- JS ---")
+        File.ls!(js_directory) |>
+        Enum.filter(& String.ends_with?(&1, ".js")) |>
+        Enum.each(fn origin ->
+            IO.puts("#{js_directory}/#{origin}")
+            :os.cmd('uglifyjs #{js_directory}/#{origin} > #{output}/js/#{origin}')
+        end)
+    end
 
     if dir_to_copy do
         dir_to_copy |> Enum.each(fn d ->
