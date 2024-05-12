@@ -72,3 +72,10 @@ html_handler:
         templatization?: true # flag to activate templates in html
     ]
 ```
+
+## Usage
+
+This simple command run the front compilation
+```elixir
+mix compile_front
+```
