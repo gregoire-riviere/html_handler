@@ -1,5 +1,4 @@
 defmodule Mix.Tasks.CompileFront do
-
   use Mix.Task
   @requirements ["app.config"]
 
@@ -11,8 +10,10 @@ defmodule Mix.Tasks.CompileFront do
     output = Application.get_env(:html_handler, :directories)[:output]
     templatization? = Application.get_env(:html_handler, :templatization?, false)
 
-    previous_output = output |>
-    String.replace_suffix("/", "")
+    previous_output =
+      output
+      |> String.replace_suffix("/", "")
+
     previous_output = previous_output <> ".previous/"
     File.rm_rf!(previous_output)
     File.rename(output, previous_output)
@@ -23,55 +24,68 @@ defmodule Mix.Tasks.CompileFront do
     File.mkdir(output <> "/js")
 
     IO.puts(" --- HTML ---")
-    File.ls!(html_directory) |>
-    Enum.filter(& String.ends_with?(&1, ".html")) |>
-    Enum.each(fn origin ->
-        IO.puts("#{html_directory}/#{origin}")
-        tempo = if templatization? do 
-            File.read!("#{html_directory}/#{origin}") |> HTMLHandler.Templater.replace(html_directory)
-        else File.read!("#{html_directory}/#{origin}") end
-        File.write!("#{output}/html/temp.#{origin}", tempo)
-        :os.cmd('html-minifier --collapse-whitespace --remove-comments --remove-redundant-attributes #{output}/html/temp.#{origin} > #{output}/html/#{origin}')
-        File.rm("#{output}/html/temp.#{origin}")
+
+    File.ls!(html_directory)
+    |> Enum.filter(&String.ends_with?(&1, ".html"))
+    |> Enum.each(fn origin ->
+      IO.puts("#{html_directory}/#{origin}")
+
+      tempo =
+        if templatization? do
+          File.read!("#{html_directory}/#{origin}")
+          |> HTMLHandler.Templater.replace(html_directory)
+        else
+          File.read!("#{html_directory}/#{origin}")
+        end
+
+      File.write!("#{output}/html/temp.#{origin}", tempo)
+
+      :os.cmd(
+        ~c"html-minifier --collapse-whitespace --remove-comments --remove-redundant-attributes #{output}/html/temp.#{origin} > #{output}/html/#{origin}"
+      )
+
+      File.rm("#{output}/html/temp.#{origin}")
     end)
 
     if File.exists?(css_directory) do
-        IO.puts(" --- CSS ---")
-        File.ls!(css_directory) |>
-        Enum.filter(& String.ends_with?(&1, ".css")) |>
-        Enum.each(fn origin ->
-            IO.puts("#{css_directory}/#{origin}")
-            :os.cmd('minify #{css_directory}/#{origin} > #{output}/css/#{origin}')
-        end)
+      IO.puts(" --- CSS ---")
+
+      File.ls!(css_directory)
+      |> Enum.filter(&String.ends_with?(&1, ".css"))
+      |> Enum.each(fn origin ->
+        IO.puts("#{css_directory}/#{origin}")
+        :os.cmd(~c"minify #{css_directory}/#{origin} > #{output}/css/#{origin}")
+      end)
     end
 
     if File.exists?(js_directory) do
-        IO.puts(" --- JS ---")
-        File.ls!(js_directory) |>
-        Enum.filter(& String.ends_with?(&1, ".js")) |>
-        Enum.each(fn origin ->
-            IO.puts("#{js_directory}/#{origin}")
-            :os.cmd('uglifyjs #{js_directory}/#{origin} > #{output}/js/#{origin}')
-        end)
+      IO.puts(" --- JS ---")
+
+      File.ls!(js_directory)
+      |> Enum.filter(&String.ends_with?(&1, ".js"))
+      |> Enum.each(fn origin ->
+        IO.puts("#{js_directory}/#{origin}")
+        :os.cmd(~c"uglifyjs #{js_directory}/#{origin} > #{output}/js/#{origin}")
+      end)
     end
 
     if dir_to_copy do
-        dir_to_copy |> Enum.each(fn d ->
-            name = Path.basename(d)
-            File.mkdir("#{output}/#{name}")
-            File.cp_r(d, "#{output}/#{name}")
-        end)
+      dir_to_copy
+      |> Enum.each(fn d ->
+        name = Path.basename(d)
+        File.mkdir("#{output}/#{name}")
+        File.cp_r(d, "#{output}/#{name}")
+      end)
     end
-
   end
 end
 
 defmodule Mix.Tasks.InstallMinifiers do
+  use Mix.Task
 
-    use Mix.Task
-    def run(_) do
-        :os.cmd('npm install -g uglifyjs')
-        :os.cmd('npm install -g minify')
-        :os.cmd('npm install -g html-minifier')
-    end
+  def run(_) do
+    :os.cmd(~c"npm install -g uglifyjs")
+    :os.cmd(~c"npm install -g minify")
+    :os.cmd(~c"npm install -g html-minifier")
+  end
 end

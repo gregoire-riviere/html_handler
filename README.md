@@ -1,5 +1,7 @@
 # HtmlHandler
 
+Requires Elixir 1.18 and Erlang/OTP 28.
+
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed

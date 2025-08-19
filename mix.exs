@@ -5,7 +5,7 @@ defmodule HtmlHandler.MixProject do
     [
       app: :html_handler,
       version: "1.0.1",
-      elixir: "~> 1.13",
+      elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
