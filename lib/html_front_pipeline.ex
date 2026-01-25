@@ -41,7 +41,7 @@ defmodule Mix.Tasks.CompileFront do
       File.write!("#{output}/html/temp.#{origin}", tempo)
 
       :os.cmd(
-        ~c"html-minifier --collapse-whitespace --remove-comments --remove-redundant-attributes #{output}/html/temp.#{origin} > #{output}/html/#{origin}"
+        ~c"npx html-minifier --collapse-whitespace --remove-comments --remove-redundant-attributes #{output}/html/temp.#{origin} > #{output}/html/#{origin}"
       )
 
       File.rm("#{output}/html/temp.#{origin}")
@@ -54,7 +54,7 @@ defmodule Mix.Tasks.CompileFront do
       |> Enum.filter(&String.ends_with?(&1, ".css"))
       |> Enum.each(fn origin ->
         IO.puts("#{css_directory}/#{origin}")
-        :os.cmd(~c"minify #{css_directory}/#{origin} > #{output}/css/#{origin}")
+        :os.cmd(~c"npx minify #{css_directory}/#{origin} > #{output}/css/#{origin}")
       end)
     end
 
@@ -65,7 +65,7 @@ defmodule Mix.Tasks.CompileFront do
       |> Enum.filter(&String.ends_with?(&1, ".js"))
       |> Enum.each(fn origin ->
         IO.puts("#{js_directory}/#{origin}")
-        :os.cmd(~c"uglifyjs #{js_directory}/#{origin} > #{output}/js/#{origin}")
+        :os.cmd(~c"npx uglify-js #{js_directory}/#{origin} > #{output}/js/#{origin}")
       end)
     end
 
