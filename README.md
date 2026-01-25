@@ -21,44 +21,56 @@ be found at <https://hexdocs.pm/html_handler>.
 
 ## Goal
 
-The goal of this deps is to provide a very simple way to pre-compile raw html/CSS/JS on server side
+Provide a simple, server-side pre-compiler for raw HTML/CSS/JS with optional templating,
+minification, and asset copying.
 
-## Principles
+## Features
 
-### Pre compile HTML content
+### HTML replacement (blocks)
 
-__Exemple__ (index.html):
+**Example** (index.html):
 ```html
 <p>[Test]This is a mock![/Test]</p>
 ```
 
-Given a map as follows 
+Given a map:
 ```elixir
 %{
   "Test" => "This is my text!"
 }
 ```
 
-It becomes (index.html) :
+It becomes (index.html):
 ```html
 <p>This is my text!</p>
 ```
 
-### Use templates
+### HTML templates
 
-You can also use html blocks like :
+Use inline templates to inject the content of another HTML file:
 ```html
 <template src="path_to_the_file"/>
 ```
-where the code of the html file will be injected in the html
+The referenced file is injected at compile time.
 
-### Others
+### Minification
 
-Plus, this compiler takes care of minification of assets and put the compiled version in a dedicated directory
+HTML, CSS, and JS are minified during compilation (via `npx html-minifier`,
+`npx minify`, and `npx uglify-js`).
+
+### Asset copying
+
+Copy extra directories (images, fonts, etc.) into the output folder.
+
+### Output structure
+
+The compiler creates:
+- `output/html` for HTML
+- `output/css` for CSS
+- `output/js` for JS
 
 ## Configuration
 
-The configuration should be as follows :
 ```elixir
 html_handler:
     [
@@ -68,16 +80,35 @@ html_handler:
             css: "web/assets/css/", # directory for css files
             # other directories to embed in the compile version
             dir_to_copy: ["web/assets/img", "web/assets/font"],
-            #directory for the compiled version
-            output: "web_build/",  
+            # directory for the compiled version
+            output: "web_build/",
         },
-        templatization?: true # flag to activate templates in html
+        templatization?: true, # flag to activate templates in html
+        watch?: false # enable file watching to auto-compile
     ]
 ```
 
 ## Usage
 
-This simple command run the front compilation
+Run the front compilation:
 ```elixir
 mix compile_front
+```
+
+### Watch mode
+
+To recompile automatically on file change:
+```elixir
+watch?: true
+```
+Then run:
+```elixir
+mix compile_front
+```
+
+### Install minifiers (global)
+
+If the minifiers are not installed yet:
+```elixir
+mix install_minifiers
 ```
