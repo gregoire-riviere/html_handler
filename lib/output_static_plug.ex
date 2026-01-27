@@ -62,7 +62,7 @@ defmodule HTMLHandler.Plug.OutputStatic do
     if String.starts_with?(file_path, html_root) and File.regular?(file_path) do
       conn =
         conn
-        |> Plug.Conn.put_resp_content_type(Plug.MIME.path(file_path))
+        |> Plug.Conn.put_resp_content_type(MIME.from_path(file_path))
         |> Plug.Conn.send_file(200, file_path)
         |> Plug.Conn.halt()
 
