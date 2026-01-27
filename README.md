@@ -69,6 +69,63 @@ The compiler creates:
 - `output/css` for CSS
 - `output/js` for JS
 
+### Serve compiled assets (Plug)
+
+Use the provided plug to serve the compiled `output` directory (including subfolders):
+```elixir
+plug HTMLHandler.Plug.OutputStatic
+```
+
+Optional overrides:
+```elixir
+plug HTMLHandler.Plug.OutputStatic, at: "/assets", output: "web_build/"
+```
+
+#### Route HTML pages explicitly
+
+By default, direct access to HTML files is blocked (`/html/...` or `*.html`).
+You must declare which HTML pages are reachable via `:routes`:
+```elixir
+plug HTMLHandler.Plug.OutputStatic,
+  routes: %{
+    "/home" => "index.html",
+    "/blog" => "blog.html"
+  }
+```
+
+This serves:
+- `/home` -> `output/html/index.html`
+- `/blog` -> `output/html/blog.html`
+
+All other HTML files remain inaccessible through the plug.
+
+#### Asset routing notes
+
+- Static assets (css/js/images/fonts, etc.) remain accessible under the normal path.
+- If you change `:at`, it scopes **all** static assets, including the HTML routes above.
+
+#### Copy/paste module (Plug.Router)
+
+```elixir
+defmodule MyApp.Router do
+  use Plug.Router
+
+  plug :match
+  plug HTMLHandler.Plug.OutputStatic,
+    at: "/",
+    output: "web_build/",
+    routes: %{
+      "/home" => "index.html",
+      "/blog" => "blog.html"
+    }
+  plug :dispatch
+
+  match _ do
+    send_resp(conn, 404, "Not Found")
+  end
+end
+```
+
 ## Configuration
 
 ```elixir
