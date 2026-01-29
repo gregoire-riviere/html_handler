@@ -19,17 +19,23 @@ defmodule HTMLHandler.Plug.OutputStatic do
       ]
       |> Enum.reject(fn {_k, v} -> is_nil(v) end)
 
-    case route_html(conn, output, routes) do
-      {:ok, conn} ->
-        conn
+    cond do
+      seo_request?(conn) ->
+        serve_seo(conn, output)
 
-      :no_route ->
-        if html_request?(conn) do
-          conn
-          |> Plug.Conn.send_resp(404, "Not Found")
-          |> Plug.Conn.halt()
-        else
-          Plug.Static.call(conn, Plug.Static.init(static_opts))
+      true ->
+        case route_html(conn, output, routes) do
+          {:ok, conn} ->
+            conn
+
+          :no_route ->
+            if html_request?(conn) do
+              conn
+              |> Plug.Conn.send_resp(404, "Not Found")
+              |> Plug.Conn.halt()
+            else
+              Plug.Static.call(conn, Plug.Static.init(static_opts))
+            end
         end
     end
   end
@@ -77,5 +83,26 @@ defmodule HTMLHandler.Plug.OutputStatic do
   defp html_request?(%Plug.Conn{path_info: path_info}) do
     path = "/" <> Enum.join(path_info, "/")
     String.starts_with?(path, "/html/") or String.ends_with?(path, ".html")
+  end
+
+  defp seo_request?(%Plug.Conn{path_info: path_info}) do
+    path = "/" <> Enum.join(path_info, "/")
+    path in ["/sitemap.xml", "/robots.txt"]
+  end
+
+  defp serve_seo(conn, output) do
+    path = "/" <> Enum.join(conn.path_info, "/")
+    file_path = Path.join(output, String.trim_leading(path, "/"))
+
+    if File.regular?(file_path) do
+      conn
+      |> Plug.Conn.put_resp_content_type(MIME.from_path(file_path))
+      |> Plug.Conn.send_file(200, file_path)
+      |> Plug.Conn.halt()
+    else
+      conn
+      |> Plug.Conn.send_resp(404, "Not Found")
+      |> Plug.Conn.halt()
+    end
   end
 end

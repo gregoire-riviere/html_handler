@@ -12,7 +12,6 @@ defmodule Mix.Tasks.CompileFront do
     templatization? = Application.get_env(:html_handler, :templatization?, false)
     watch? = Application.get_env(:html_handler, :watch?, false)
     seo? = Application.get_env(:html_handler, :seo?, false)
-    seo_output = Application.get_env(:html_handler, :seo_output, "seo/")
     routes = Application.get_env(:html_handler, :routes, %{})
     base_url = Application.get_env(:html_handler, :base_url)
 
@@ -24,7 +23,6 @@ defmodule Mix.Tasks.CompileFront do
       output,
       templatization?,
       seo?,
-      seo_output,
       routes,
       base_url
     )
@@ -52,7 +50,6 @@ defmodule Mix.Tasks.CompileFront do
           output,
           templatization?,
           seo?,
-          seo_output,
           routes,
           base_url
         )
@@ -69,7 +66,6 @@ defmodule Mix.Tasks.CompileFront do
          output,
          templatization?,
          seo?,
-         seo_output,
          routes,
          base_url
        ) do
@@ -133,6 +129,7 @@ defmodule Mix.Tasks.CompileFront do
     end
 
     if seo? do
+      seo_output = Path.join(output, "seo")
       generate_seo_files(seo_output, routes, base_url, html_directory)
       copy_seo_files(seo_output, output)
     end
