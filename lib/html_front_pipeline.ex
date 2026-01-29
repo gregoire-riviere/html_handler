@@ -11,6 +11,10 @@ defmodule Mix.Tasks.CompileFront do
     output = directories[:output]
     templatization? = Application.get_env(:html_handler, :templatization?, false)
     watch? = Application.get_env(:html_handler, :watch?, false)
+    seo? = Application.get_env(:html_handler, :seo?, false)
+    seo_output = Application.get_env(:html_handler, :seo_output, "seo/")
+    routes = Application.get_env(:html_handler, :routes, %{})
+    base_url = Application.get_env(:html_handler, :base_url)
 
     compile_front(
       js_directory,
@@ -18,7 +22,11 @@ defmodule Mix.Tasks.CompileFront do
       css_directory,
       dir_to_copy,
       output,
-      templatization?
+      templatization?,
+      seo?,
+      seo_output,
+      routes,
+      base_url
     )
 
     if watch? do
@@ -39,12 +47,16 @@ defmodule Mix.Tasks.CompileFront do
           compile_front(
             js_directory,
             html_directory,
-            css_directory,
-            dir_to_copy,
-            output,
-            templatization?
-          )
-        end)
+          css_directory,
+          dir_to_copy,
+          output,
+          templatization?,
+          seo?,
+          seo_output,
+          routes,
+          base_url
+        )
+      end)
       end
     end
   end
@@ -55,7 +67,11 @@ defmodule Mix.Tasks.CompileFront do
          css_directory,
          dir_to_copy,
          output,
-         templatization?
+         templatization?,
+         seo?,
+         seo_output,
+         routes,
+         base_url
        ) do
     previous_output =
       output
@@ -116,6 +132,11 @@ defmodule Mix.Tasks.CompileFront do
       end)
     end
 
+    if seo? do
+      generate_seo_files(seo_output, routes, base_url, html_directory)
+      copy_seo_files(seo_output, output)
+    end
+
     if dir_to_copy do
       dir_to_copy
       |> Enum.each(fn d ->
@@ -172,6 +193,100 @@ defmodule Mix.Tasks.CompileFront do
     output_prefix = Path.join(output, "")
     expanded_path = Path.expand(path)
     expanded_path == output or String.starts_with?(expanded_path, output_prefix)
+  end
+
+  defp generate_seo_files(seo_output, routes, base_url, html_directory) do
+    if is_nil(base_url) or base_url == "" do
+      Mix.shell().error("SEO enabled but :base_url is missing. Skipping sitemap/robots generation.")
+      :noop
+    else
+      File.mkdir_p!(seo_output)
+      sitemap = build_sitemap_xml(routes, base_url, html_directory)
+      File.write!(Path.join(seo_output, "sitemap.xml"), sitemap)
+
+      robots =
+        [
+          "User-agent: *",
+          "Allow: /",
+          "Sitemap: #{String.trim_trailing(base_url, "/")}/sitemap.xml"
+        ]
+        |> Enum.join("\n")
+        |> Kernel.<>("\n")
+
+      File.write!(Path.join(seo_output, "robots.txt"), robots)
+    end
+  end
+
+  defp copy_seo_files(seo_output, output) do
+    files = ["sitemap.xml", "robots.txt"]
+
+    Enum.each(files, fn name ->
+      src = Path.join(seo_output, name)
+      dest = Path.join(output, name)
+
+      if File.regular?(src) do
+        File.cp!(src, dest)
+      end
+    end)
+  end
+
+  defp build_sitemap_xml(routes, base_url, html_directory) do
+    urls =
+      routes
+      |> Enum.map(fn {path, file} ->
+        loc = String.trim_trailing(base_url, "/") <> path_with_leading_slash(path)
+        lastmod = lastmod_for(file, html_directory)
+        build_url_entry(loc, lastmod)
+      end)
+      |> Enum.join("\n")
+
+    [
+      ~s(<?xml version="1.0" encoding="UTF-8"?>),
+      ~s(<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">),
+      urls,
+      "</urlset>"
+    ]
+    |> Enum.join("\n")
+  end
+
+  defp build_url_entry(loc, nil) do
+    [
+      "  <url>",
+      "    <loc>#{loc}</loc>",
+      "  </url>"
+    ]
+    |> Enum.join("\n")
+  end
+
+  defp build_url_entry(loc, lastmod) do
+    [
+      "  <url>",
+      "    <loc>#{loc}</loc>",
+      "    <lastmod>#{lastmod}</lastmod>",
+      "  </url>"
+    ]
+    |> Enum.join("\n")
+  end
+
+  defp lastmod_for(file, html_directory) when is_binary(html_directory) do
+    file_path = Path.join(html_directory, file)
+
+    case File.stat(file_path) do
+      {:ok, stat} ->
+        {{year, month, day}, _time} = stat.mtime
+        date = Date.from_erl!({year, month, day})
+        Date.to_iso8601(date)
+
+      {:error, _reason} ->
+        nil
+    end
+  end
+
+  defp lastmod_for(_file, _html_directory), do: nil
+
+  defp path_with_leading_slash(path) do
+    path = to_string(path)
+    if String.starts_with?(path, "/"), do: path, else: "/" <> path
   end
 end
 

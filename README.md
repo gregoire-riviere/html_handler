@@ -69,6 +69,9 @@ The compiler creates:
 - `output/css` for CSS
 - `output/js` for JS
 
+If `seo?` is enabled, `sitemap.xml` and `robots.txt` are generated in `seo_output`
+and copied to the root of the build output.
+
 ### Serve compiled assets (Plug)
 
 Use the provided plug to serve the compiled `output` directory (including subfolders):
@@ -141,7 +144,14 @@ html_handler:
             output: "web_build/",
         },
         templatization?: true, # flag to activate templates in html
-        watch?: false # enable file watching to auto-compile
+        watch?: false, # enable file watching to auto-compile
+        seo?: true, # generate sitemap.xml and robots.txt
+        seo_output: "seo/", # folder where SEO files are generated
+        base_url: "https://example.com", # used in sitemap/robots
+        routes: %{
+          "/home" => "index.html",
+          "/blog" => "blog.html"
+        }
     ]
 ```
 
