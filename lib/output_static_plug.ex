@@ -7,6 +7,7 @@ defmodule HTMLHandler.Plug.OutputStatic do
     output = Keyword.get(opts, :output, output_dir())
     at = Keyword.get(opts, :at, "/")
     routes = Keyword.get(opts, :routes, %{})
+    token_api = Keyword.get(opts, :token_api, false)
 
     static_opts =
       [
@@ -19,22 +20,28 @@ defmodule HTMLHandler.Plug.OutputStatic do
       ]
       |> Enum.reject(fn {_k, v} -> is_nil(v) end)
 
-    cond do
-      seo_request?(conn) ->
-        serve_seo(conn, output)
+    case HTMLHandler.Plug.Token.handle_api(conn, token_api) do
+      {:ok, conn} ->
+        conn
 
-      true ->
-        case route_html(conn, output, routes) do
-          {:ok, conn} ->
-            conn
+      :no_route ->
+        cond do
+          seo_request?(conn) ->
+            serve_seo(conn, output)
 
-          :no_route ->
-            if html_request?(conn) do
-              conn
-              |> Plug.Conn.send_resp(404, "Not Found")
-              |> Plug.Conn.halt()
-            else
-              Plug.Static.call(conn, Plug.Static.init(static_opts))
+          true ->
+            case route_html(conn, output, routes) do
+              {:ok, conn} ->
+                conn
+
+              :no_route ->
+                if html_request?(conn) do
+                  conn
+                  |> Plug.Conn.send_resp(404, "Not Found")
+                  |> Plug.Conn.halt()
+                else
+                  Plug.Static.call(conn, Plug.Static.init(static_opts))
+                end
             end
         end
     end
